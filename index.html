@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pokédex</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topo">
+    <span class="luz" aria-hidden="true"></span>
+    <span class="pontos" aria-hidden="true"><i></i><i></i><i></i></span>
+    <h1>Pokédex</h1>
+  </header>
+
+  <main>
+    <form id="form-busca" class="busca">
+      <label for="campo-busca">Nome ou número do Pokémon</label>
+      <div class="busca-linha">
+        <input id="campo-busca" type="text" list="lista-nomes" placeholder="Ex.: pikachu ou 25" autocomplete="off" required>
+        <datalist id="lista-nomes"></datalist>
+        <button id="botao-buscar" type="submit">Buscar</button>
+        <button id="botao-aleatorio" type="button" class="secundario">Aleatório</button>
+      </div>
+    </form>
+
+    <div id="historico" class="chips" aria-label="Pesquisas recentes"></div>
+
+    <section id="resultado" aria-live="polite">
+      <div class="aviso inicio">
+        <span class="bola" aria-hidden="true"></span>
+        <p>Digite o nome ou o número de um Pokémon, ou comece por um destes:</p>
+        <div class="chips">
+          <button type="button" class="chip" data-pokemon="pikachu">pikachu</button>
+          <button type="button" class="chip" data-pokemon="charizard">charizard</button>
+          <button type="button" class="chip" data-pokemon="eevee">eevee</button>
+          <button type="button" class="chip" data-pokemon="gengar">gengar</button>
+          <button type="button" class="chip" data-pokemon="lucario">lucario</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    Dados da <a href="https://pokeapi.co/" target="_blank" rel="noopener">PokeAPI</a>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
