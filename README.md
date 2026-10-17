@@ -1,7 +1,7 @@
 # Pokédex
 
 ## Autor
-SEU NOME COMPLETO — Matrícula 0000000
+joão Humberto Resende do Nascimento — Matrícula 22606172
 
 ## Descrição
 Aplicação web para pesquisar qualquer Pokémon por nome ou número e consultar seus dados, sua linha de evolução (incluindo Mega Evoluções e outras formas especiais) e curiosidades da Pokédex. Útil para fãs e jogadores que querem consultar informações rápidas.
@@ -25,9 +25,9 @@ Aplicação web para pesquisar qualquer Pokémon por nome ou número e consultar
 - Mensagens amigáveis para busca sem resultado ou API fora do ar
 
 ## Como executar localmente
-1. Clone: `git clone https://github.com/SEU-USUARIO/bootcamp2-app.git`
+1. Clone: `git clone https://github.com/joaorisende-design/bootcamp2-app.git`
 2. Abra o arquivo `index.html` no navegador
 
 ## Links
-- **Aplicação no ar (GitHub Pages):** https://SEU-USUARIO.github.io/bootcamp2-app/
-- **Repositório:** https://github.com/SEU-USUARIO/bootcamp2-app
+- **Aplicação no ar (GitHub Pages):** https://joaorisende-design.github.io/bootcamp2-app/
+- **Repositório:** https://github.com/joaorisende-design/bootcamp2-app
