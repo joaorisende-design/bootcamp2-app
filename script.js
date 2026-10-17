@@ -1,3 +1,10 @@
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+/* ---------- Supabase: COLE AQUI A SUA URL E A SUA CHAVE (publishable/anon) ---------- */
+const SUPABASE_URL = "https://wvsfrgdmlugbenigbakz.supabase.co";
+const SUPABASE_KEY = "sb_publishable_ybyPo8KrvN4YexR43abt-A_CtAQjP2x";
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+
 const API = "https://pokeapi.co/api/v2/";
 const ARTE = (id) => `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
 const TOTAL_POKEMON = 1025;
@@ -8,6 +15,7 @@ const botaoAleatorio = document.getElementById("botao-aleatorio");
 const area = document.getElementById("resultado");
 const caixaHistorico = document.getElementById("historico");
 const listaNomes = document.getElementById("lista-nomes");
+const caixaFavoritos = document.getElementById("lista-favoritos");
 
 /* ---------- tabelas de tradução ---------- */
 const CORES_TIPO = {
@@ -47,12 +55,14 @@ const GRUPOS_OVO = {
 /* ---------- estado ---------- */
 let token = 0;            // evita que uma resposta antiga sobrescreva a mais nova
 let pokemonAtual = null;  // nome do Pokémon exibido
+let pokemonIdAtual = 0;   // id do Pokémon exibido (usado na imagem do time)
 let idEspecieAtual = 0;
 let abaAtual = "geral";
 let arteNormal = "", arteBrilho = "";
 let gritoAudio = null, gritoUrl = "";
 let entradas = [], idxEntrada = 0;
 let historico = [];
+let favoritos = [];       // registros do time vindos do banco
 
 /* ---------- utilidades ---------- */
 async function getJSON(url) {
@@ -68,6 +78,8 @@ async function getJSON(url) {
 const idDaUrl = (url) => Number(url.split("/").filter(Boolean).pop());
 const limparTexto = (t) => t.replace(/[\n\f\u00ad]/g, " ").replace(/\s+/g, " ").trim();
 const bonito = (nome) => nome.replace(/-/g, " ");
+const esc = (t) => String(t).replace(/[&<>"']/g, (c) =>
+  ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
 function escolherIdioma(lista) {
   for (const idioma of ["pt-BR", "pt", "en"]) {
@@ -156,6 +168,7 @@ async function carregar(termoBruto) {
 /* ---------- cartão principal ---------- */
 function desenharCartao(d) {
   idEspecieAtual = idDaUrl(d.species.url);
+  pokemonIdAtual = d.id;
   const cor = CORES_TIPO[d.types[0].type.name] || "#888";
   document.documentElement.style.setProperty("--cor", cor); // a página inteira acompanha a cor do tipo
   const oficial = (d.sprites.other && d.sprites.other["official-artwork"]) || {};
@@ -187,6 +200,7 @@ function desenharCartao(d) {
         <button type="button" class="nav next" id="btn-proximo" aria-label="Próximo Pokémon">›</button>
       </div>
       <div class="acoes">
+        <button type="button" id="btn-favoritar">☆ Adicionar ao time</button>
         ${arteBrilho ? '<button type="button" id="btn-brilho" aria-pressed="false">Versão brilhante</button>' : ""}
         ${d.cries && d.cries.latest ? '<button type="button" id="btn-grito">Ouvir grito</button>' : ""}
       </div>
@@ -219,6 +233,8 @@ function desenharCartao(d) {
         <p class="vazio">Carregando curiosidades...</p>
       </div>
     </article>`;
+
+  atualizarBotaoFavorito();
 }
 
 function trocarAba(nome, focar) {
@@ -413,6 +429,74 @@ async function carregarNomes() {
   }
 }
 
+/* ---------- persistência: time de Pokémon (Supabase) ---------- */
+
+// READ: busca o time salvo no banco
+async function listarFavoritos() {
+  const { data, error } = await supabase.from("favoritos").select("*").order("criado_em");
+  if (error) {
+    console.error(error);
+    caixaFavoritos.innerHTML = '<p class="erro">Não foi possível carregar o seu time agora.</p>';
+    return;
+  }
+  favoritos = data;
+  desenharFavoritos();
+  atualizarBotaoFavorito();
+}
+
+function desenharFavoritos() {
+  if (!favoritos.length) {
+    caixaFavoritos.innerHTML = '<p class="vazio">Seu time está vazio. Busque um Pokémon e adicione!</p>';
+    return;
+  }
+  caixaFavoritos.innerHTML = favoritos.map((f) => `
+    <div class="fav">
+      <button type="button" class="fav-abrir" data-pokemon="${esc(f.nome_item)}">
+        <img src="${ARTE(esc(f.dados_extra))}" alt="" loading="lazy">
+        <b>${esc(bonito(f.nome_item))}</b>
+      </button>
+      <button type="button" class="fav-remover" data-remover="${esc(f.id)}"
+        aria-label="Remover ${esc(bonito(f.nome_item))} do time">✕</button>
+    </div>`).join("");
+}
+
+function atualizarBotaoFavorito() {
+  const botao = document.getElementById("btn-favoritar");
+  if (!botao) return;
+  const noTime = favoritos.some((f) => f.nome_item === pokemonAtual);
+  botao.textContent = noTime ? "★ Remover do time" : "☆ Adicionar ao time";
+  botao.disabled = false;
+}
+
+// CREATE (se ainda não está no time) ou DELETE (se já está)
+async function alternarFavorito() {
+  const botao = document.getElementById("btn-favoritar");
+  if (!botao || !pokemonAtual) return;
+  botao.disabled = true;
+  const existente = favoritos.find((f) => f.nome_item === pokemonAtual);
+  const { error } = existente
+    ? await supabase.from("favoritos").delete().eq("id", existente.id)
+    : await supabase.from("favoritos").insert({ nome_item: pokemonAtual, dados_extra: String(pokemonIdAtual) });
+  if (error) {
+    console.error(error);
+    alert("Não foi possível atualizar o seu time. Tente de novo.");
+    atualizarBotaoFavorito();
+    return;
+  }
+  await listarFavoritos();
+}
+
+// DELETE pelo botão ✕ da seção "Meu time"
+async function removerFavorito(id) {
+  const { error } = await supabase.from("favoritos").delete().eq("id", id);
+  if (error) {
+    console.error(error);
+    alert("Não foi possível remover agora. Tente de novo.");
+    return;
+  }
+  await listarFavoritos();
+}
+
 /* ---------- eventos ---------- */
 form.addEventListener("submit", (evento) => {
   evento.preventDefault();
@@ -434,6 +518,8 @@ document.addEventListener("click", (evento) => {
   else if (alvo.id === "btn-brilho") alternarBrilho();
   else if (alvo.id === "btn-grito") tocarGrito();
   else if (alvo.id === "btn-outra") outraCuriosidade();
+  else if (alvo.id === "btn-favoritar") alternarFavorito();
+  else if (alvo.dataset.remover) removerFavorito(alvo.dataset.remover);
 });
 
 // setas do teclado entre as abas
@@ -455,4 +541,5 @@ window.addEventListener("hashchange", () => {
 try { historico = JSON.parse(localStorage.getItem("pokedex-historico")) || []; } catch (e) { historico = []; }
 desenharHistorico();
 carregarNomes();
+listarFavoritos(); // carrega o time salvo no banco ao abrir a página
 if (location.hash.length > 1) carregar(decodeURIComponent(location.hash.slice(1)));
