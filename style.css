@@ -272,3 +272,9 @@ footer a { color: var(--azul); }
   .palco::before { width: 200px; height: 200px; }
   .stat { grid-template-columns: 94px 30px 1fr; font-size: .85rem; }
 }
+#time { max-width: 760px; margin: 2rem auto; padding: 0 1rem; }
+#lista-favoritos { display: flex; flex-wrap: wrap; gap: .75rem; }
+.fav { position: relative; }
+.fav-abrir { display: flex; flex-direction: column; align-items: center; padding: .5rem; cursor: pointer; text-transform: capitalize; }
+.fav-abrir img { width: 80px; height: 80px; object-fit: contain; }
+.fav-remover { position: absolute; top: -6px; right: -6px; width: 24px; height: 24px; border-radius: 50%; cursor: pointer; }
